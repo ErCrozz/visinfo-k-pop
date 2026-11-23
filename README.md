@@ -49,6 +49,7 @@ restano sempre coerenti.
 | Preprocessing | Python 3 + networkx ≥ 3.4 | lettura CSV, metriche di rete, Louvain (seed fisso) |
 | Layout | Node.js + d3-force | layout a forze deterministico (generatore pseudo-casuale con seed) |
 | Visualizzazione | D3 v7 | scale, zoom, timer, brush, assi dei grafici SVG |
+| Interfaccia | HTML + CSS (`backdrop-filter`), font Inter (`@fontsource-variable/inter`, incluso in locale) | pannelli di vetro sospesi sul grafo a tutta finestra |
 | Rendering grafo | Canvas 2D (HTML5) | migliaia di nodi e archi fluidi, senza un elemento DOM per nodo |
 | Build / dev server | Vite 6 | server di sviluppo su :5180, bundle statico in `web/dist/` |
 | Linguaggio frontend | JavaScript (ES2022, moduli) | nessun framework UI, solo DOM e CSS |
@@ -69,19 +70,56 @@ web/                  frontend statico (Vite + D3, rendering su Canvas)
 docs/METODOLOGIA.md   scelte di modellazione, colore e tassonomia delle operazioni
 ```
 
+## Requisiti
+
+| Strumento | Versione | Serve per |
+|---|---|---|
+| [Node.js](https://nodejs.org/) (con npm) | ≥ 18 | frontend e layout a forze |
+| [Python](https://www.python.org/) | ≥ 3.10 | solo per rigenerare il grafo (preprocessing) |
+
+Per **vedere il sito** basta Node: `web/public/graph.json` è già generato e incluso.
+
 ## Avvio
 
-```bash
-# 1) preprocessing (solo se cambiano i dati; graph.json è già generato)
-python preprocess/build_graph.py      # richiede networkx >= 3.4
-node preprocess/layout.mjs            # richiede web/node_modules (npm install)
+Tutti i comandi partono dalla cartella principale del progetto (`VisInfoKPop/`).
 
-# 2) frontend
+### 1. Installazione delle dipendenze (una volta sola)
+
+```bash
+# dipendenze JavaScript (D3, d3-force, Vite): servono al sito e a preprocess/layout.mjs
 cd web
 npm install
-npm run dev        # http://localhost:5180
-npm run build      # pagina statica in web/dist/
+cd ..
+
+# dipendenze Python (networkx): servono solo al preprocessing
+python -m pip install -r preprocess/requirements.txt
 ```
+
+Su macOS/Linux, se `python` non esiste, si usa `python3`. Volendo, prima di `pip` si può creare
+un ambiente virtuale: `python -m venv .venv`, poi `.venv\Scripts\activate` (Windows) oppure
+`source .venv/bin/activate` (macOS/Linux).
+
+### 2. Avvio del sito
+
+```bash
+cd web
+npm run dev        # http://localhost:5180
+```
+
+Per una versione statica da pubblicare: `npm run build` (output in `web/dist/`), con anteprima
+tramite `npm run preview`.
+
+### 3. Preprocessing (solo se cambiano i CSV in `data/`)
+
+Richiede che il passo 1 sia stato completato, **compreso `npm install` in `web/`**:
+`layout.mjs` importa d3-force da `web/node_modules`.
+
+```bash
+python preprocess/build_graph.py   # ~50 s: tipi di relazione, metriche, comunità → graph.json
+node preprocess/layout.mjs         # ~25 s: layout a forze, riscrive graph.json
+```
+
+I due script vanno eseguiti in quest'ordine. Il secondo rilegge il file prodotto dal primo.
 
 ## Arresto
 
@@ -112,6 +150,9 @@ Gli script di preprocessing terminano da soli; per interromperli a metà basta `
 | Tasto | Azione |
 |---|---|
 | clic su nodo | seleziona (in ego/gerarchica: ricentra) |
+| clic su un chip | accende o spegne quel tipo di nodo o di relazione |
+| doppio clic su un chip | tiene solo quel tipo |
+| / | cerca |
 | E / H / O | vista ego radiale / gerarchica / panoramica |
 | Backspace | indietro |
 | Esc | deseleziona |

@@ -49,6 +49,7 @@ export function shapePath(ctx, macro, x, y, r) {
   }
 }
 
+export const FONT = '"Inter Variable", -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
 const truncate = (s, n = 26) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
 
 export class Renderer {
@@ -62,6 +63,8 @@ export class Renderer {
     this.anim = null;
     this.hover = null;
     this._raf = 0;
+    // spazio occupato dai pannelli sospesi: fit() centra il grafo nell'area libera
+    this.insets = { l: 0, r: 0, t: 0, b: 0 };
 
     this.zoom = d3.zoom()
       .scaleExtent([0.02, 10])
@@ -111,10 +114,14 @@ export class Renderer {
     const xs = nodes.map((n) => (useTarget ? n.tx : n.cx));
     const ys = nodes.map((n) => (useTarget ? n.ty : n.cy));
     const [x0, x1] = d3.extent(xs), [y0, y1] = d3.extent(ys);
-    const pad = 60;
+    const pad = 40;
+    const { r, t: top, b } = this.insets;
+    // nella vista gerarchica i nomi dei livelli occupano un margine a sinistra
+    const l = this.insets.l + (this.scene?.guides?.some((g) => g.kind === 'level') ? 64 : 0);
+    const fw = Math.max(120, this.w - l - r), fh = Math.max(120, this.h - top - b);
     const bw = Math.max(x1 - x0, 1), bh = Math.max(y1 - y0, 1);
-    const k = Math.min(4, Math.max(0.02, Math.min((this.w - 2 * pad) / bw, (this.h - 2 * pad - 30) / bh)));
-    const t = d3.zoomIdentity.translate(this.w / 2 - k * (x0 + x1) / 2, this.h / 2 + 15 - k * (y0 + y1) / 2).scale(k);
+    const k = Math.min(4, Math.max(0.02, Math.min((fw - 2 * pad) / bw, (fh - 2 * pad) / bh)));
+    const t = d3.zoomIdentity.translate(l + fw / 2 - k * (x0 + x1) / 2, top + fh / 2 - k * (y0 + y1) / 2).scale(k);
     const sel = d3.select(this.canvas);
     if (duration) sel.transition().duration(duration).ease(d3.easeCubicInOut).call(this.zoom.transform, t);
     else sel.call(this.zoom.transform, t);
@@ -251,7 +258,7 @@ export class Renderer {
   _drawGuides(guides) {
     const { ctx, tokens: T } = this;
     ctx.save();
-    ctx.font = '11px system-ui, "Segoe UI", sans-serif';
+    ctx.font = `500 10.5px ${FONT}`;
     for (const g of guides) {
       if (g.kind === 'ring') {
         const r = g.r * this.transform.k;
@@ -269,7 +276,7 @@ export class Renderer {
         ctx.fillStyle = T.muted;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(g.label.toUpperCase(), 10, this.sy(g.y));
+        ctx.fillText(g.label.toUpperCase(), this.insets.l + 12, this.sy(g.y));
       } else if (g.kind === 'text') {
         ctx.fillStyle = T.muted;
         ctx.textAlign = 'center';
@@ -295,7 +302,7 @@ export class Renderer {
     }
     cands.sort((a, b) => b[1] - a[1]);
 
-    ctx.font = '11.5px system-ui, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
+    ctx.font = `500 11.5px ${FONT}`;
     ctx.lineJoin = 'round';
     const boxes = [];
     const hit = (b) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);

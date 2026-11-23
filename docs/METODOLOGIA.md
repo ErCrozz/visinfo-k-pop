@@ -79,6 +79,9 @@ Motivazioni:
   scala di grigi e alla modalità "Centralità", in cui il colore è occupato da un'altra variabile.
 * Alcune tinte del tema chiaro (verde-acqua, magenta, giallo) sono sotto 3:1 di contrasto
   sul fondo: la compensazione sono le etichette testuali, il tooltip e il pannello dettagli.
+* Le superfici del grafo sono #f9f9fb (chiaro) e #151517 (scuro); i pannelli sono vetro
+  traslucido sospeso sopra il grafo, che resta l'unico elemento opaco. Le verifiche sopra sono
+  state ripetute su queste superfici, con gli stessi risultati.
 * **Tema scuro** con gradini dedicati delle stesse tinte (validati sul fondo scuro), non
   un'inversione automatica.
 * Il testo usa sempre gli inchiostri neutri, mai il colore della serie.
@@ -109,10 +112,10 @@ con il riferimento al mantra di Shneiderman (1996).
 | **Select** — marcare qualcosa di interessante | details-on-demand | clic su un nodo (anello di selezione, vicini evidenziati); risultati di ricerca cerchiati |
 | **Explore** — mostrare qualcos'altro | zoom | grafico delle componenti → cambio di componente; clic su un vicino nel pannello dettagli; vista ego a 1/2/3 passi |
 | **Reconfigure** — mostrare una disposizione diversa | relate | Panoramica ↔ Ego radiale ↔ Gerarchica, con transizione animata dei nodi |
-| **Encode** — cambiare la rappresentazione | — | "Colore per": categoria / genere / centralità / comunità |
+| **Encode** — cambiare la rappresentazione | — | controllo segmentato "Colore": categoria / genere / centralità / comunità; i chip dei tipi di nodo cambiano colore con la modalità e fanno da legenda |
 | **Abstract/Elaborate** — più o meno dettaglio | overview / zoom | zoom e pan con etichette semantiche; componenti piccole aggregate in una barra e in una griglia |
-| **Filter** — mostrare in base a condizioni | filter | tipi di nodo, tipi di relazione, relazioni ambigue sì/no, grado minimo, isola comunità |
-| **Connect** — mostrare elementi correlati | relate | hover: vicinato evidenziato e archi incidenti in primo piano; brush sull'istogramma dei gradi; hover su un vicino nel pannello lo evidenzia nel grafo |
+| **Filter** — mostrare in base a condizioni | filter | chip dei tipi di nodo e di relazione (clic = accendi/spegni, doppio clic = solo quello), interruttore per le relazioni ambigue, slider del grado minimo, isola comunità |
+| **Connect** — mostrare elementi correlati | relate | hover su un chip: anteprima nel grafo dei nodi di quel tipo o degli archi di quella relazione, prima di filtrare; hover sul grafo: vicinato evidenziato e archi incidenti in primo piano; brush sull'istogramma dei gradi; hover su un vicino nel pannello lo evidenzia nel grafo |
 | (history) | history | ← indietro (Backspace), ⟲ ripristina (R), ⤢ adatta (F) |
 | (details) | details-on-demand | tooltip; pannello con tipo, grado, rango di centralità, comunità e vicini raggruppati per relazione orientata ("Gestito da", "Membri", "Membro di"…) |
 

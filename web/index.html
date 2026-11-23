@@ -3,104 +3,136 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rete K-pop</title>
-  <link rel="stylesheet" href="./src/style.css" />
+  <title>K-Pop Music</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='8' cy='16' r='6' fill='%232a78d6'/%3E%3Crect x='15' y='4' width='10' height='10' fill='%23eb6834'/%3E%3Cpath d='M22 17l7 7-7 7-7-7z' fill='%231baf7a'/%3E%3C/svg%3E" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <h1>Rete K-pop</h1>
-      <span class="subtitle">artisti, gruppi e label dell'industria musicale coreana</span>
+  <!-- il grafo occupa tutta la finestra: i pannelli di vetro galleggiano sopra -->
+  <canvas id="graph" aria-label="Grafo della rete K-pop"></canvas>
+
+  <!-- ============ barra centrale: viste e navigazione ============ -->
+  <div class="dock top" role="toolbar" aria-label="Viste e navigazione">
+    <div class="segmented" id="mode-seg" role="radiogroup" aria-label="Vista">
+      <span class="seg-thumb" aria-hidden="true"></span>
+      <button data-mode="overview" role="radio" title="Panoramica: layout a forze della componente (O)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="6" r="2"/><circle cx="14.5" cy="4.5" r="2"/><circle cx="10" cy="11" r="2.4"/><circle cx="4.5" cy="15" r="1.8"/><circle cx="15.5" cy="15" r="2"/><path d="M6.6 7.3 8.6 9.5M13.3 6 11.2 9.2M8.3 12.4 6 14M11.7 12.4l2.3 1.7"/></svg>
+        <span>Panoramica</span>
+      </button>
+      <button data-mode="ego" role="radio" title="Ego radiale: il nodo selezionato al centro, i vicini su anelli (E)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.2" class="fill"/><circle cx="10" cy="10" r="5"/><circle cx="10" cy="10" r="8.3"/></svg>
+        <span>Ego</span>
+      </button>
+      <button data-mode="hier" role="radio" title="Gerarchica: label → gruppi → artisti (H)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7.5" y="2" width="5" height="4" rx="1"/><rect x="2" y="14" width="5" height="4" rx="1"/><rect x="13" y="14" width="5" height="4" rx="1"/><path d="M10 6v4M4.5 14v-2.5h11V14"/></svg>
+        <span>Gerarchica</span>
+      </button>
     </div>
-    <nav class="toolbar" aria-label="Navigazione">
-      <div class="segmented" role="radiogroup" aria-label="Vista">
-        <button data-mode="overview" role="radio" title="Layout a forze della componente (O)">Panoramica</button>
-        <button data-mode="ego" role="radio" title="Nodo selezionato al centro, vicini su anelli concentrici (E)">Ego radiale</button>
-        <button data-mode="hier" role="radio" title="Label → gruppi → artisti attorno al nodo selezionato (H)">Gerarchica</button>
+
+    <div class="stepper" id="hops" title="Distanza massima dal centro nella vista ego">
+      <button data-d="-1" aria-label="Meno passi">−</button>
+      <output id="hops-out">2 passi</output>
+      <button data-d="1" aria-label="Più passi">+</button>
+    </div>
+
+    <span class="sep" aria-hidden="true"></span>
+
+    <button id="btn-back" class="icon-btn" title="Indietro (Backspace)" aria-label="Indietro">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4 6.5 10l6 6"/></svg>
+    </button>
+    <button id="btn-fit" class="icon-btn" title="Adatta alla finestra (F)" aria-label="Adatta alla finestra">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7.5V3h4.5M17 7.5V3h-4.5M3 12.5V17h4.5M17 12.5V17h-4.5"/></svg>
+    </button>
+    <button id="btn-reset" class="icon-btn" title="Ripristina tutto (R)" aria-label="Ripristina">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 10a6.5 6.5 0 1 0 2-4.7M3.5 3v3.5H7"/></svg>
+    </button>
+    <button id="btn-theme" class="icon-btn" title="Tema chiaro / scuro" aria-label="Cambia tema">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 3a7 7 0 0 1 0 14z" class="fill"/></svg>
+    </button>
+  </div>
+  <div id="breadcrumb" class="crumb"></div>
+
+  <!-- ============ colonna sinistra: identità, ricerca, codifica e filtri ============ -->
+  <aside class="glass side left" id="side-left" aria-label="Ricerca e filtri">
+    <header class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40"><circle cx="11" cy="22" r="8" class="m-artist"/><rect x="19" y="5" width="13" height="13" rx="1.5" class="m-group"/><path d="M28 21.5l8.5 8.5-8.5 8.5-8.5-8.5z" class="m-label"/></svg>
       </div>
-      <label class="hops" title="Distanza massima dal nodo centrale nella vista ego">
-        Distanza
-        <select id="hops">
-          <option value="1">1 passo</option>
-          <option value="2" selected>2 passi</option>
-          <option value="3">3 passi</option>
-        </select>
-      </label>
-      <button id="btn-back" class="icon-btn" title="Indietro (Backspace)" aria-label="Indietro">←</button>
-      <button id="btn-reset" class="icon-btn" title="Ripristina tutto (R)" aria-label="Ripristina">⟲</button>
-      <button id="btn-fit" class="icon-btn" title="Adatta alla finestra (F)" aria-label="Adatta alla finestra">⤢</button>
-      <button id="btn-theme" class="icon-btn" title="Tema chiaro/scuro" aria-label="Cambia tema">◐</button>
-    </nav>
-  </header>
+      <div>
+        <h1><span class="k">K-Pop</span> <span class="m">Music</span></h1>
+        <p class="tagline">chi canta con chi, e per chi</p>
+      </div>
+      <button class="icon-btn ghost collapse" data-collapse="left" title="Nascondi pannello" aria-label="Nascondi pannello">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="3"/><path d="M8 3.5v13"/></svg>
+      </button>
+    </header>
 
-  <main class="layout">
-    <aside class="panel left" aria-label="Filtri">
+    <div class="search">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg>
+      <input id="search" type="search" placeholder="Cerca artisti, gruppi, label…" autocomplete="off" spellcheck="false" />
+      <ul id="search-results" class="search-results" role="listbox"></ul>
+    </div>
+
+    <div class="scroll">
       <section>
-        <h2>Cerca</h2>
-        <div class="search">
-          <input id="search" type="search" placeholder="Nome (anche in hangul)…" autocomplete="off" />
-          <ul id="search-results" class="search-results" role="listbox"></ul>
+        <h2>Colore</h2>
+        <div class="segmented grid" id="color-seg" role="radiogroup" aria-label="Colore per">
+          <button data-color="type" role="radio" title="Macro-categoria: artista, gruppo, label">Categoria</button>
+          <button data-color="gender" role="radio" title="Genere degli artisti">Genere</button>
+          <button data-color="btw" role="radio" title="Betweenness: i nodi-ponte tra scene diverse">Centralità</button>
+          <button data-color="comm" role="radio" title="Comunità Louvain del nodo selezionato">Comunità</button>
         </div>
-      </section>
-
-      <section>
-        <h2>Colore per</h2>
-        <select id="color-by">
-          <option value="type">Categoria (artista / gruppo / label)</option>
-          <option value="gender">Genere degli artisti</option>
-          <option value="btw">Centralità (betweenness)</option>
-          <option value="comm">Comunità del nodo selezionato</option>
-        </select>
         <div id="legend" class="legend"></div>
       </section>
 
       <section>
-        <h2>Tipi di nodo</h2>
-        <div id="filter-types" class="checklist"></div>
+        <h2>Nodi <button class="link" id="types-all" hidden>Mostra tutti</button></h2>
+        <div id="filter-types" class="chips"></div>
       </section>
 
       <section>
-        <h2>Relazioni</h2>
-        <div id="filter-rels" class="checklist"></div>
-        <label class="check sub">
-          <input type="checkbox" id="filter-ambiguous" checked />
-          <span>Includi relazioni ambigue</span>
+        <h2>Relazioni <button class="link" id="rels-all" hidden>Mostra tutte</button></h2>
+        <div id="filter-rels" class="chips"></div>
+        <label class="switch-row">
+          <span>Relazioni ambigue</span>
+          <input type="checkbox" role="switch" id="filter-ambiguous" class="switch" checked />
         </label>
       </section>
 
       <section>
-        <h2>Grado minimo <output id="min-deg-out">1</output></h2>
-        <input id="min-deg" type="range" min="0" max="20" step="1" value="0" />
-        <p class="hint">Nasconde i nodi con meno collegamenti (il nodo selezionato resta visibile).</p>
-      </section>
-    </aside>
-
-    <section class="stage" aria-label="Grafo">
-      <canvas id="graph"></canvas>
-      <div id="breadcrumb" class="breadcrumb"></div>
-      <div id="status" class="status"></div>
-      <div id="tooltip" class="tooltip" hidden></div>
-    </section>
-
-    <aside class="panel right" aria-label="Dettagli e viste coordinate">
-      <section id="details" class="details">
-        <h2>Dettagli</h2>
-        <p class="hint">Passa sopra un nodo per un'anteprima, cliccalo per selezionarlo.</p>
+        <h2>Grado minimo <output id="min-deg-out" class="pill-val">tutti</output></h2>
+        <input id="min-deg" type="range" min="0" max="20" step="1" value="0" aria-label="Grado minimo" />
       </section>
 
-      <section>
+      <p class="foot">Clic su un chip per accenderlo o spegnerlo · doppio clic per tenere solo quello · passa sopra per vederlo nel grafo.</p>
+    </div>
+  </aside>
+  <button class="glass reopen left" data-collapse="left" title="Mostra pannello" aria-label="Mostra pannello filtri" hidden>
+    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M5.5 10h9M8 15h4"/></svg>
+  </button>
+
+  <!-- ============ colonna destra: dettagli e viste coordinate ============ -->
+  <aside class="side right" id="side-right" aria-label="Dettagli e viste coordinate">
+    <section id="details" class="glass card details"></section>
+
+    <section class="glass card charts">
+      <header class="card-head">
         <h2>Componenti connesse</h2>
-        <p class="hint">Clic su una barra per esplorare la componente.</p>
-        <div id="comp-chart" class="chart"></div>
-      </section>
+        <button class="icon-btn ghost collapse" data-collapse="right" title="Nascondi pannello" aria-label="Nascondi pannello">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="3"/><path d="M12 3.5v13"/></svg>
+        </button>
+      </header>
+      <div id="comp-chart" class="chart"></div>
+      <h2 class="sub">Distribuzione dei gradi</h2>
+      <div id="deg-chart" class="chart"></div>
+      <p class="foot">Clic su una barra per cambiare componente · trascina sull'istogramma per evidenziare un intervallo di grado.</p>
+    </section>
+  </aside>
+  <button class="glass reopen right" data-collapse="right" title="Mostra pannello" aria-label="Mostra pannello dettagli" hidden>
+    <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="11" width="3" height="6" rx="1"/><rect x="8.5" y="6" width="3" height="11" rx="1"/><rect x="14" y="3" width="3" height="14" rx="1"/></svg>
+  </button>
 
-      <section>
-        <h2>Distribuzione dei gradi</h2>
-        <p class="hint">Trascina per evidenziare un intervallo di grado.</p>
-        <div id="deg-chart" class="chart"></div>
-      </section>
-    </aside>
-  </main>
+  <div id="status" class="glass status"></div>
+  <div id="tooltip" class="tooltip" hidden></div>
 
   <script type="module" src="./src/main.js"></script>
 </body>
