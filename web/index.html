@@ -112,9 +112,9 @@
 
   <!-- ============ colonna destra: dettagli e viste coordinate ============ -->
   <aside class="side right" id="side-right" aria-label="Dettagli e viste coordinate">
-    <section id="details" class="glass card details"></section>
+    <section class="glass card details"><div id="details" class="card-body"></div></section>
 
-    <section class="glass card charts">
+    <section class="glass card charts"><div class="card-body">
       <header class="card-head">
         <h2>Componenti connesse</h2>
         <button class="icon-btn ghost collapse" data-collapse="right" title="Nascondi pannello" aria-label="Nascondi pannello">
@@ -125,7 +125,7 @@
       <h2 class="sub">Distribuzione dei gradi</h2>
       <div id="deg-chart" class="chart"></div>
       <p class="foot">Clic su una barra per cambiare componente · trascina sull'istogramma per evidenziare un intervallo di grado.</p>
-    </section>
+    </div></section>
   </aside>
   <button class="glass reopen right" data-collapse="right" title="Mostra pannello" aria-label="Mostra pannello dettagli" hidden>
     <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="11" width="3" height="6" rx="1"/><rect x="8.5" y="6" width="3" height="11" rx="1"/><rect x="14" y="3" width="3" height="14" rx="1"/></svg>

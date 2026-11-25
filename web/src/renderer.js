@@ -178,8 +178,8 @@ export class Renderer {
   draw() {
     const { ctx, tokens: T, scene } = this;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    ctx.fillStyle = T.surface;
-    ctx.fillRect(0, 0, this.w, this.h);
+    // fondo trasparente: sotto c'è il body con le luci d'ambiente che il vetro dei pannelli rifrange
+    ctx.clearRect(0, 0, this.w, this.h);
     if (!scene) return;
 
     const hover = this.hover;
@@ -324,7 +324,8 @@ export class Renderer {
       } else { tx = x; ty = y + r + 10; align = 'center'; }
       const x0 = align === 'left' ? tx : align === 'right' ? tx - w : tx - w / 2;
       const box = { x0: x0 - 2, x1: x0 + w + 2, y0: ty - h / 2 - 1, y1: ty + h / 2 + 1 };
-      if (p < 1e6 && hit(box)) continue;
+      // solo il nodo sotto il puntatore e quello selezionato ignorano le collisioni
+      if (p < 1e8 && hit(box)) continue;
       boxes.push(box);
       count++;
       ctx.globalAlpha = Math.min(1, emph(n) + 0.2);
